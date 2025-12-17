@@ -1,0 +1,85 @@
+export const mockStaff = [
+  {
+    staff_id: 1,
+    name: "張美容",
+    employee_id: "EMP001",
+    role: "高級美甲師",
+    role_id: "staff",
+    status: "在職",
+    phone: "0912-345-678",
+    email: "chang@example.com",
+    services: ["美甲", "手部光療", "足部保養"],
+    photo: null,
+  },
+  {
+    staff_id: 2,
+    name: "李美甲",
+    employee_id: "EMP002",
+    role: "助理",
+    role_id: "staff",
+    status: "在職",
+    phone: "0923-456-789",
+    email: "li@example.com",
+    services: ["美甲", "基礎保養"],
+    photo: null,
+  },
+  {
+    staff_id: 3,
+    name: "王店長",
+    employee_id: "EMP003",
+    role: "店長",
+    role_id: "admin",
+    status: "在職",
+    phone: "0934-567-890",
+    email: "wang@example.com",
+    services: ["美甲", "美睫", "岩盤浴", "手部光療"],
+    photo: null,
+  },
+];
+
+export const mockShifts = [
+  {
+    shift_id: 1,
+    staff_id: 1,
+    staff_name: "張美容",
+    date: "2024-01-15",
+    day_of_week: "Mon",
+    start_time: "09:00",
+    end_time: "17:00",
+    shift_type: "早班",
+  },
+  {
+    shift_id: 2,
+    staff_id: 1,
+    staff_name: "張美容",
+    date: "2024-01-16",
+    day_of_week: "Tue",
+    start_time: "09:00",
+    end_time: "17:00",
+    shift_type: "早班",
+  },
+  {
+    shift_id: 3,
+    staff_id: 2,
+    staff_name: "李美甲",
+    date: "2024-01-15",
+    day_of_week: "Mon",
+    start_time: "14:00",
+    end_time: "22:00",
+    shift_type: "晚班",
+  },
+  {
+    shift_id: 4,
+    staff_id: 3,
+    staff_name: "王店長",
+    date: "2024-01-15",
+    day_of_week: "Mon",
+    start_time: "09:00",
+    end_time: "18:00",
+    shift_type: "全日班",
+  },
+];
+
+
+
+

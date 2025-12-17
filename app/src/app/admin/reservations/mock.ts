@@ -1,0 +1,31 @@
+export const mockReservations = [
+  {
+    reservation_id: 1,
+    customer_name: "王小明",
+    customer_phone: "0912-345-678",
+    service_item: "基礎保養",
+    booking_date: "2024-01-15",
+    booking_time_slot: "14:00-15:00",
+    status: "已確認",
+    staff: "張美容",
+    total_amount: 1200,
+    note: "顧客偏好溫和產品",
+    source: "官網",
+    created_at: "2024-01-10 10:30:00",
+  },
+  {
+    reservation_id: 2,
+    customer_name: "李小華",
+    customer_phone: "0923-456-789",
+    service_item: "深層清潔",
+    booking_date: "2024-01-16",
+    booking_time_slot: "10:00-11:00",
+    status: "待確認",
+    staff: "李美甲",
+    total_amount: 1500,
+    note: "",
+    source: "電話",
+    created_at: "2024-01-11 14:20:00",
+  },
+];
+

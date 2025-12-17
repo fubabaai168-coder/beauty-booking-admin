@@ -1,0 +1,34 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ServiceItem（服務項目）
+// 官網級 Service Catalog 的最小可行模型（v1）
+model ServiceItem {
+  id           String   @id @default(cuid()) // 服務 ID (Service ID)
+  branchId     String   // 分店 ID (Branch ID)
+
+  title        String   // 服務名稱 (Title)
+  description  String?  // 服務說明 (Description)
+  price        Int      // 價格（最小貨幣單位，例如 TWD 元）(Price)
+  durationMin  Int      // 服務時長（分鐘）(Duration in minutes)
+
+  imageUrl     String?  // 主圖 URL (Main image URL)
+
+  isActive     Boolean  @default(true) // 是否上架 (Active)
+  sortOrder    Int      @default(0)    // 前台排序 (Sort order)
+
+  createdAt    DateTime @default(now()) // 建立時間 (Created at)
+  updatedAt    DateTime @updatedAt      // 更新時間 (Updated at)
+
+  @@index([branchId])
+}
+
