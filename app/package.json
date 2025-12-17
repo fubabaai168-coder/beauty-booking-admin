@@ -12,16 +12,16 @@
     "@prisma/client": "^6.4.1",
     "@vercel/blob": "^2.0.0",
     "next": "14.2.5",
-    "react": "19.2.1",
-    "react-dom": "19.2.1"
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.45",
     "babel-plugin-react-compiler": "1.0.0",
-    "eslint": "^9",
+    "eslint": "^8.57.0",
     "eslint-config-next": "14.2.5",
     "prisma": "^6.4.1",
     "tailwindcss": "^4",
