@@ -24,3 +24,5 @@ export default function StaffAvatar({ name }: StaffAvatarProps) {
 
 
 
+
+
