@@ -66,12 +66,12 @@ export default function ServiceItemsPage() {
     // 簡單檢查：嘗試呼叫 API，如果返回 CONFIG_ERROR 則表示沒有 token
     // 使用 HEAD 請求或簡單的檢查方式
     try {
-      const formData = new FormData();
+      const uploadData = new FormData();
       const emptyBlob = new Blob([], { type: "image/png" });
-      formData.append("file", emptyBlob, "test.png");
+      uploadData.append("file", emptyBlob, "test.png");
       const response = await fetch("/api/admin/uploads/image", {
         method: "POST",
-        body: formData,
+        body: uploadData,
       });
       const data = await response.json();
       // 如果是 CONFIG_ERROR，表示沒有 token；如果是 INVALID_INPUT，表示有 token 但檔案無效
@@ -194,12 +194,12 @@ export default function ServiceItemsPage() {
       const processedBlob = await processImage(file);
 
       // 上傳到伺服器
-      const formData = new FormData();
-      formData.append("file", processedBlob, file.name);
+      const uploadData = new FormData();
+      uploadData.append("file", processedBlob, file.name);
 
       const response = await fetch("/api/admin/uploads/image", {
         method: "POST",
-        body: formData,
+        body: uploadData,
       });
 
       if (!response.ok) {
@@ -208,7 +208,7 @@ export default function ServiceItemsPage() {
       }
 
       const data = await response.json();
-      setFormData({ ...formData, imageUrl: data.url });
+      setFormData(prev => ({ ...prev, imageUrl: data.url }));
       setImagePreview(data.url);
     } catch (error) {
       console.error("Error uploading image:", error);
