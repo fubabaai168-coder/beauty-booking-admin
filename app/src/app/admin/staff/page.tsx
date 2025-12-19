@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { STAFF_DATA } from "@/lib/mock-data";
 import { ShiftConfigDialog } from "@/components/ShiftConfigDialog";
-import StaffShiftCalendar from "@/components/StaffShiftCalendar";
+import StaffShiftCalendar from "@/components/admin/StaffShiftCalendar";
 import type { DaySchedule } from "@/lib/mock-data";
 import { Calendar } from "lucide-react";
 
@@ -105,11 +105,11 @@ export default function StaffListPage() {
 
   return (
     <div className="max-w-full space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between relative z-10">
         <h1 className="text-2xl font-semibold text-zinc-900">
           人員與排班管理
         </h1>
-        <Button>
+        <Button className="relative z-10">
           <span>新增設計師</span>
         </Button>
       </div>

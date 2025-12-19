@@ -83,7 +83,7 @@ export function ShiftConfigDialog({
         <DialogHeader>
           <DialogTitle>{staffName} 的週班表設定</DialogTitle>
           <DialogDescription>
-            設定每週的上班時間與休假日期
+            設定每週的上班時間與休假日期（此設定會應用到未來的所有週）
           </DialogDescription>
         </DialogHeader>
 
@@ -110,7 +110,7 @@ export function ShiftConfigDialog({
               <div className="flex items-center gap-2 flex-1">
                 <div className="flex items-center gap-2">
                   <Label htmlFor={`start-${day.day}`} className="text-sm">
-                    開始
+                    上班
                   </Label>
                   <Input
                     id={`start-${day.day}`}
@@ -121,12 +121,13 @@ export function ShiftConfigDialog({
                     }
                     disabled={day.isOff}
                     className="w-32"
+                    step="1800"
                   />
                 </div>
                 <span className="text-muted-foreground">-</span>
                 <div className="flex items-center gap-2">
                   <Label htmlFor={`end-${day.day}`} className="text-sm">
-                    結束
+                    下班
                   </Label>
                   <Input
                     id={`end-${day.day}`}
@@ -137,6 +138,7 @@ export function ShiftConfigDialog({
                     }
                     disabled={day.isOff}
                     className="w-32"
+                    step="1800"
                   />
                 </div>
               </div>

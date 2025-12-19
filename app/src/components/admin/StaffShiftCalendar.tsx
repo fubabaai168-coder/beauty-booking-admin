@@ -36,7 +36,6 @@ function expandWeeklyScheduleToMonth(
   color: string
 ): ShiftEvent[] {
   const events: ShiftEvent[] = [];
-  const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
   const daysInMonth = lastDay.getDate();
 
@@ -79,7 +78,7 @@ function expandWeeklyScheduleToMonth(
   return events;
 }
 
-// 根據技能取得代表色
+// 根據技能取得代表色（使用 Rose-700 主色調）
 function getStaffColor(skills: string[]): string {
   if (skills.includes("美甲")) {
     return "bg-rose-100 border-rose-300 text-rose-700";
@@ -164,7 +163,7 @@ export default function StaffShiftCalendar({
       </div>
 
       {/* 月曆控制 */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={handlePreviousMonth}>
             <ChevronLeft className="h-4 w-4" />
@@ -176,81 +175,85 @@ export default function StaffShiftCalendar({
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        <h2 className="text-lg font-semibold">
-          {year} 年 {month + 1} 月
+        <h2 className="text-lg font-semibold text-rose-700">
+          {year}年 {month + 1}月
         </h2>
       </div>
 
-      {/* 月曆網格 */}
-      <Card className="overflow-hidden">
-        <div className="grid grid-cols-7 border-b border-zinc-200">
-          {weekDays.map((day) => (
-            <div
-              key={day}
-              className="p-3 text-center text-sm font-medium text-zinc-700 bg-zinc-50"
-            >
-              {day}
-            </div>
-          ))}
-        </div>
-        <div className="grid grid-cols-7">
-          {days.map((date, index) => {
-            const events = date ? getEventsForDate(date) : [];
-            const isToday =
-              date &&
-              date.toDateString() === new Date().toDateString();
-            const isEmpty = events.length === 0;
-
-            return (
+      {/* 月曆網格 - 響應式設計 */}
+      <div className="overflow-x-auto">
+        <Card className="overflow-hidden min-w-[700px] md:min-w-0">
+          <div className="grid grid-cols-7 border-b border-zinc-200">
+            {weekDays.map((day) => (
               <div
-                key={index}
-                className={`min-h-[120px] border-r border-b border-zinc-200 p-2 ${
-                  isEmpty && date
-                    ? "bg-red-50"
-                    : "bg-white"
-                }`}
+                key={day}
+                className="p-3 text-center text-sm font-medium text-zinc-700 bg-zinc-50"
               >
-                {date ? (
-                  <>
-                    <div
-                      className={`text-sm font-medium mb-2 ${
-                        isToday
-                          ? "text-rose-600 font-bold"
-                          : "text-zinc-900"
-                      }`}
-                    >
-                      {date.getDate()}
-                    </div>
-                    <div className="space-y-1">
-                      {events.map((event) => (
-                        <div
-                          key={event.id}
-                          className={`text-xs px-2 py-1 rounded border ${event.color}`}
-                          title={`${event.staffName}: ${event.start} - ${event.end}`}
-                        >
-                          <div className="font-medium truncate">
-                            {event.staffName}
-                          </div>
-                          <div className="text-xs opacity-75">
-                            {event.start}-{event.end}
-                          </div>
-                        </div>
-                      ))}
-                      {isEmpty && (
-                        <div className="text-xs text-red-500 font-medium">
-                          無人上班
-                        </div>
-                      )}
-                    </div>
-                  </>
-                ) : (
-                  <div className="bg-zinc-50 h-full" />
-                )}
+                {day}
               </div>
-            );
-          })}
-        </div>
-      </Card>
+            ))}
+          </div>
+          <div className="grid grid-cols-7">
+            {days.map((date, index) => {
+              const events = date ? getEventsForDate(date) : [];
+              const isToday =
+                date &&
+                date.toDateString() === new Date().toDateString();
+              const isEmpty = events.length === 0 && date !== null;
+
+              return (
+                <div
+                  key={index}
+                  className={`min-h-[120px] border-r border-b p-2 ${
+                    isToday
+                      ? "border-4 border-rose-500 bg-rose-50"
+                      : isEmpty
+                      ? "border-zinc-200 bg-red-50 border-red-200"
+                      : "border-zinc-200 bg-white"
+                  }`}
+                >
+                  {date ? (
+                    <>
+                      <div
+                        className={`text-sm font-medium mb-2 ${
+                          isToday
+                            ? "text-rose-700 font-bold"
+                            : "text-zinc-900"
+                        }`}
+                      >
+                        {isToday ? "今天" : date.getDate()}
+                      </div>
+                      <div className="space-y-1">
+                        {events.map((event) => (
+                          <div
+                            key={event.id}
+                            className={`text-xs px-2 py-1 rounded border ${event.color}`}
+                            title={`${event.staffName}: ${event.start} - ${event.end}`}
+                          >
+                            <div className="font-medium truncate">
+                              {event.staffName}
+                            </div>
+                            <div className="text-xs opacity-75">
+                              {event.start}-{event.end}
+                            </div>
+                          </div>
+                        ))}
+                        {isEmpty && (
+                          <div className="text-xs text-red-600 font-medium font-semibold">
+                            無人上班
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="bg-zinc-50 h-full" />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }
