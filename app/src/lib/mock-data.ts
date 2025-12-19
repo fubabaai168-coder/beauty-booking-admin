@@ -9,6 +9,14 @@ export type DaySchedule = {
   end: string; // "21:00"
 };
 
+// 定義單日排班例外型別
+export type ScheduleException = {
+  date: string; // 格式 "YYYY-MM-DD"
+  isOff: boolean; // 是否休假
+  workHours?: { start: string; end: string }; // 若非休假，可覆寫當日工時
+  note?: string; // 備註 (例如: 事假, 調班)
+};
+
 export const SERVICES_DATA = [
   {
     id: "service_001",
@@ -16,6 +24,7 @@ export const SERVICES_DATA = [
     category: "Nail",
     price: 1200,
     duration: 60,
+    bufferTime: 10,
     description: "包含修型、甘皮處理與單色凝膠上色，含加厚。",
   },
   {
@@ -24,6 +33,7 @@ export const SERVICES_DATA = [
     category: "Nail",
     price: 1500,
     duration: 90,
+    bufferTime: 10,
     description: "經典法式微笑線或漸層暈染設計，氣質首選。",
   },
   {
@@ -32,6 +42,7 @@ export const SERVICES_DATA = [
     category: "Nail",
     price: 1800,
     duration: 90,
+    bufferTime: 15,
     description: "針對足底硬皮與厚繭進行軟化與磨除，含去角質與乳液按摩。",
   },
   {
@@ -40,6 +51,7 @@ export const SERVICES_DATA = [
     category: "Lash",
     price: 1600,
     duration: 60,
+    bufferTime: 10,
     description: "一接一技法，打造像刷了睫毛膏般的自然有神眼妝。",
   },
   {
@@ -48,6 +60,7 @@ export const SERVICES_DATA = [
     category: "Lash",
     price: 2200,
     duration: 90,
+    bufferTime: 10,
     description: "多層次開花技法，眼線感明顯，適合喜歡妝感強烈的顧客。",
   },
   {
@@ -56,6 +69,7 @@ export const SERVICES_DATA = [
     category: "Lash",
     price: 1200,
     duration: 60,
+    bufferTime: 5,
     description: "使用自身睫毛進行捲翹定型，含睫毛滋養修護。",
   },
   {
@@ -64,6 +78,7 @@ export const SERVICES_DATA = [
     category: "Facial",
     price: 2500,
     duration: 60,
+    bufferTime: 15,
     description: "非侵入式真空負壓清潔，去除粉刺與老廢角質，提升肌膚透亮度。",
   },
   {
@@ -72,6 +87,7 @@ export const SERVICES_DATA = [
     category: "Facial",
     price: 2000,
     duration: 90,
+    bufferTime: 15,
     description: "針對乾燥缺水肌膚，透過超聲波導入高濃度玻尿酸精華。",
   },
 ];
@@ -93,6 +109,20 @@ export const STAFF_DATA = [
       { day: "Sat", dayLabel: "週六", isOff: false, start: "10:00", end: "18:00" },
       { day: "Sun", dayLabel: "週日", isOff: true, start: "10:00", end: "18:00" },
     ],
+    // 單日排班例外
+    scheduleExceptions: [
+      {
+        date: "2025-12-24", // 下週三（原本上班）改為特休
+        isOff: true,
+        note: "特休",
+      },
+      {
+        date: "2025-12-27", // 下週六（原本 10:00 上班）改為 13:00 上班
+        isOff: false,
+        workHours: { start: "13:00", end: "18:00" },
+        note: "半天假",
+      },
+    ],
   },
   {
     id: "staff_002",
@@ -109,6 +139,7 @@ export const STAFF_DATA = [
       { day: "Sat", dayLabel: "週六", isOff: false, start: "10:00", end: "18:00" },
       { day: "Sun", dayLabel: "週日", isOff: false, start: "10:00", end: "18:00" },
     ],
+    scheduleExceptions: [],
   },
   {
     id: "staff_003",
@@ -125,6 +156,7 @@ export const STAFF_DATA = [
       { day: "Sat", dayLabel: "週六", isOff: false, start: "10:00", end: "18:00" },
       { day: "Sun", dayLabel: "週日", isOff: true, start: "10:00", end: "18:00" },
     ],
+    scheduleExceptions: [],
   },
   {
     id: "staff_004",
@@ -141,6 +173,7 @@ export const STAFF_DATA = [
       { day: "Sat", dayLabel: "週六", isOff: false, start: "10:00", end: "18:00" },
       { day: "Sun", dayLabel: "週日", isOff: false, start: "10:00", end: "18:00" },
     ],
+    scheduleExceptions: [],
   },
 ];
 

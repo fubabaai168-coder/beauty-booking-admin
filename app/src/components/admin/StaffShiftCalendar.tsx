@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Info } from "lucide-react";
-import type { DaySchedule } from "@/lib/mock-data";
+import type { DaySchedule, ScheduleException } from "@/lib/mock-data";
 
 interface ShiftEvent {
   id: string;
@@ -15,6 +15,8 @@ interface ShiftEvent {
   color: string;
   staffId: string;
   staffName: string;
+  isException?: boolean; // 標記是否為例外規則
+  note?: string; // 例外備註
 }
 
 interface StaffShiftCalendarProps {
@@ -23,14 +25,16 @@ interface StaffShiftCalendarProps {
     name: string;
     skills: string[];
     weeklySchedule: DaySchedule[];
+    scheduleExceptions?: ScheduleException[];
   }>;
 }
 
-// Helper: 將週規則展開為月份事件
+// Helper: 將週規則展開為月份事件（優先檢查例外設定）
 function expandWeeklyScheduleToMonth(
   staffId: string,
   staffName: string,
   weeklySchedule: DaySchedule[],
+  scheduleExceptions: ScheduleException[] = [],
   year: number,
   month: number,
   color: string
@@ -53,25 +57,50 @@ function expandWeeklyScheduleToMonth(
   // 遍歷當月的每一天
   for (let day = 1; day <= daysInMonth; day++) {
     const currentDate = new Date(year, month, day);
+    const dateStr = currentDate.toISOString().split("T")[0]; // "YYYY-MM-DD"
     const dayOfWeek = currentDate.getDay(); // 0-6 (0=Sunday)
 
-    // 找到對應的週規則
-    const schedule = weeklySchedule.find(
-      (s) => dayMap[s.day] === dayOfWeek
-    );
+    // 優先檢查是否有例外設定
+    const exception = scheduleExceptions.find((ex) => ex.date === dateStr);
 
-    if (schedule && !schedule.isOff) {
-      // 如果當天不是休假，建立事件
-      events.push({
-        id: `${staffId}-${year}-${month}-${day}`,
-        title: `${staffName} ${schedule.start}-${schedule.end}`,
-        date: currentDate,
-        start: schedule.start,
-        end: schedule.end,
-        color,
-        staffId,
-        staffName,
-      });
+    if (exception) {
+      // 有例外設定：使用例外規則
+      if (!exception.isOff && exception.workHours) {
+        // 例外：調整工時
+        events.push({
+          id: `${staffId}-${year}-${month}-${day}-exception`,
+          title: `${staffName} ${exception.workHours.start}-${exception.workHours.end}`,
+          date: currentDate,
+          start: exception.workHours.start,
+          end: exception.workHours.end,
+          color,
+          staffId,
+          staffName,
+          isException: true,
+          note: exception.note,
+        });
+      }
+      // 如果 exception.isOff === true，則不產生事件（休假）
+    } else {
+      // 無例外設定：使用週規則
+      const schedule = weeklySchedule.find(
+        (s) => dayMap[s.day] === dayOfWeek
+      );
+
+      if (schedule && !schedule.isOff) {
+        // 如果當天不是休假，建立事件
+        events.push({
+          id: `${staffId}-${year}-${month}-${day}`,
+          title: `${staffName} ${schedule.start}-${schedule.end}`,
+          date: currentDate,
+          start: schedule.start,
+          end: schedule.end,
+          color,
+          staffId,
+          staffName,
+          isException: false,
+        });
+      }
     }
   }
 
@@ -114,6 +143,7 @@ export default function StaffShiftCalendar({
       staff.id,
       staff.name,
       staff.weeklySchedule,
+      staff.scheduleExceptions || [],
       year,
       month,
       color
@@ -223,21 +253,37 @@ export default function StaffShiftCalendar({
                       >
                         {isToday ? "今天" : date.getDate()}
                       </div>
-                      <div className="space-y-1">
-                        {events.map((event) => (
-                          <div
-                            key={event.id}
-                            className={`text-xs px-2 py-1 rounded border ${event.color}`}
-                            title={`${event.staffName}: ${event.start} - ${event.end}`}
-                          >
-                            <div className="font-medium truncate">
-                              {event.staffName}
-                            </div>
-                            <div className="text-xs opacity-75">
-                              {event.start}-{event.end}
-                            </div>
+                    <div className="space-y-1">
+                      {events.map((event) => (
+                        <div
+                          key={event.id}
+                          className={`text-xs px-2 py-1 rounded border ${
+                            event.isException
+                              ? `${event.color} border-rose-500 border-2`
+                              : event.color
+                          }`}
+                          title={
+                            event.isException && event.note
+                              ? `${event.staffName}: ${event.start} - ${event.end} (${event.note})`
+                              : `${event.staffName}: ${event.start} - ${event.end}`
+                          }
+                        >
+                          <div className="font-medium truncate flex items-center gap-1">
+                            {event.staffName}
+                            {event.isException && (
+                              <span className="text-rose-600 font-bold" title={event.note}>
+                                *
+                              </span>
+                            )}
                           </div>
-                        ))}
+                          <div className="text-xs opacity-75">
+                            {event.start}-{event.end}
+                            {event.isException && event.note && (
+                              <span className="ml-1 text-rose-600">({event.note})</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
                         {isEmpty && (
                           <div className="text-xs text-red-600 font-medium font-semibold">
                             無人上班

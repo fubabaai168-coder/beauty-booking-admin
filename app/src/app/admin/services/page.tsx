@@ -63,7 +63,21 @@ export default function ServicesPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>NT$ {service.price.toLocaleString()}</TableCell>
-                  <TableCell>{service.duration} 分鐘</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <span>{service.duration} 分鐘</span>
+                      {service.bufferTime > 0 && (
+                        <span className="text-sm text-rose-700">
+                          (+{service.bufferTime} 分鐘緩衝)
+                        </span>
+                      )}
+                    </div>
+                    {service.bufferTime > 0 && (
+                      <div className="text-xs text-zinc-500 mt-1">
+                        總佔用時間：{service.duration + service.bufferTime} 分鐘
+                      </div>
+                    )}
+                  </TableCell>
                   <TableCell className="text-zinc-600">
                     {service.description}
                   </TableCell>
