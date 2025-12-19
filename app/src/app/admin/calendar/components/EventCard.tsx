@@ -1,9 +1,9 @@
 import Link from "next/link";
-import StatusTag from "../../reservations/components/StatusTag";
+import { Badge } from "@/components/ui/badge";
 import StaffAvatar from "./StaffAvatar";
 
 interface EventCardProps {
-  reservationId: number;
+  reservationId: string;
   time: string;
   customerName: string;
   serviceItem: string;
@@ -23,16 +23,45 @@ export default function EventCard({
 }: EventCardProps) {
   const getStatusBorderColor = (status: string): string => {
     switch (status) {
-      case "待確認":
+      case "PENDING":
         return "border-l-4 border-l-yellow-500";
-      case "已確認":
-        return "border-l-4 border-l-blue-500";
-      case "已取消":
+      case "CONFIRMED":
+        return "border-l-4 border-l-primary";
+      case "COMPLETED":
+        return "border-l-4 border-l-green-500";
+      case "CANCELLED":
         return "border-l-4 border-l-red-500";
-      case "候補中":
-        return "border-l-4 border-l-blue-500";
       default:
         return "border-l-4 border-l-gray-500";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return "待確認";
+      case "CONFIRMED":
+        return "已確認";
+      case "COMPLETED":
+        return "已完成";
+      case "CANCELLED":
+        return "已取消";
+      default:
+        return status;
+    }
+  };
+
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return "secondary";
+      case "CONFIRMED":
+      case "COMPLETED":
+        return "default";
+      case "CANCELLED":
+        return "destructive";
+      default:
+        return "outline";
     }
   };
 
@@ -46,7 +75,16 @@ export default function EventCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-sm font-medium text-zinc-900">{time}</span>
-              <StatusTag status={status} />
+              <Badge
+                variant={getStatusBadgeVariant(status) as any}
+                className={
+                  status === "PENDING"
+                    ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
+                    : ""
+                }
+              >
+                {getStatusLabel(status)}
+              </Badge>
             </div>
             <p className="text-sm font-medium text-zinc-900 mb-1">
               {customerName}
@@ -71,7 +109,17 @@ export default function EventCard({
       <div className="space-y-1">
         <div className="flex items-center justify-between gap-2">
           <span className="text-xs font-medium text-zinc-900">{time}</span>
-          <StatusTag status={status} />
+          <Badge
+            variant={getStatusBadgeVariant(status) as any}
+            className={
+              status === "PENDING"
+                ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
+                : ""
+            }
+            style={{ fontSize: "0.65rem", padding: "0.125rem 0.375rem" }}
+          >
+            {getStatusLabel(status)}
+          </Badge>
         </div>
         <p className="text-sm font-medium text-zinc-900 truncate">
           {customerName}
@@ -84,4 +132,3 @@ export default function EventCard({
     </Link>
   );
 }
-

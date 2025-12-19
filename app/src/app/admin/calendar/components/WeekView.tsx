@@ -1,4 +1,4 @@
-import { getReservations } from "../../reservations/data";
+import { getReservationsForDate } from "@/lib/mock-data";
 import EventCard from "./EventCard";
 
 interface WeekViewProps {
@@ -6,8 +6,6 @@ interface WeekViewProps {
 }
 
 export default function WeekView({ currentDate }: WeekViewProps) {
-  const reservations = getReservations();
-
   // 計算週的開始日期（週日）
   const weekStart = new Date(currentDate);
   weekStart.setDate(currentDate.getDate() - currentDate.getDay());
@@ -19,11 +17,6 @@ export default function WeekView({ currentDate }: WeekViewProps) {
     date.setDate(weekStart.getDate() + i);
     weekDays.push(date);
   }
-
-  const getReservationsForDate = (date: Date) => {
-    const dateStr = date.toISOString().split("T")[0];
-    return reservations.filter((r) => r.booking_date === dateStr);
-  };
 
   const weekDayNames = ["日", "一", "二", "三", "四", "五", "六"];
 
@@ -45,28 +38,38 @@ export default function WeekView({ currentDate }: WeekViewProps) {
         ))}
       </div>
       <div className="grid grid-cols-7 min-h-[600px]">
-        {weekDays.map((date, index) => (
-          <div
-            key={index}
-            className="border-r border-zinc-200 last:border-r-0 p-2 bg-white"
-          >
-            <div className="space-y-2">
-              {getReservationsForDate(date).map((reservation) => (
-                <EventCard
-                  key={reservation.reservation_id}
-                  reservationId={reservation.reservation_id}
-                  time={reservation.booking_time_slot.split("-")[0]}
-                  customerName={reservation.customer_name}
-                  serviceItem={reservation.service_item}
-                  status={reservation.status}
-                  staff={reservation.staff || null}
-                />
-              ))}
+        {weekDays.map((date, index) => {
+          const events = getReservationsForDate(date);
+          // Sort events by time
+          const sortedEvents = [...events].sort((a, b) => {
+            return new Date(a.start).getTime() - new Date(b.start).getTime();
+          });
+          return (
+            <div
+              key={index}
+              className="border-r border-zinc-200 last:border-r-0 p-2 bg-white"
+            >
+              <div className="space-y-2">
+                {sortedEvents.map((event) => {
+                  const startTime = new Date(event.start);
+                  const timeStr = `${startTime.getHours().toString().padStart(2, "0")}:${startTime.getMinutes().toString().padStart(2, "0")}`;
+                  return (
+                    <EventCard
+                      key={event.id}
+                      reservationId={event.id}
+                      time={timeStr}
+                      customerName={event.customerName}
+                      serviceItem={event.serviceName}
+                      status={event.status}
+                      staff={event.staffName || null}
+                    />
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
 }
-

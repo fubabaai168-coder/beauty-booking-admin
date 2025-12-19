@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState } from "react";
 import CalendarControls from "./components/CalendarControls";

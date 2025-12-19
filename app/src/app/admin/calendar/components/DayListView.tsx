@@ -1,4 +1,4 @@
-import { getReservations } from "../../reservations/data";
+import { getReservationsForDate } from "@/lib/mock-data";
 import EventCard from "./EventCard";
 
 interface DayListViewProps {
@@ -6,18 +6,11 @@ interface DayListViewProps {
 }
 
 export default function DayListView({ currentDate }: DayListViewProps) {
-  const reservations = getReservations();
-  const dateStr = currentDate.toISOString().split("T")[0];
-
-  const dayReservations = reservations.filter(
-    (r) => r.booking_date === dateStr
-  );
+  const dayReservations = getReservationsForDate(currentDate);
 
   // 依時間排序
   const sortedReservations = [...dayReservations].sort((a, b) => {
-    const timeA = a.booking_time_slot.split("-")[0];
-    const timeB = b.booking_time_slot.split("-")[0];
-    return timeA.localeCompare(timeB);
+    return new Date(a.start).getTime() - new Date(b.start).getTime();
   });
 
   return (
@@ -27,20 +20,24 @@ export default function DayListView({ currentDate }: DayListViewProps) {
           當日無預約
         </div>
       ) : (
-        sortedReservations.map((reservation) => (
-          <EventCard
-            key={reservation.reservation_id}
-            reservationId={reservation.reservation_id}
-            time={reservation.booking_time_slot}
-            customerName={reservation.customer_name}
-            serviceItem={reservation.service_item}
-            status={reservation.status}
-            staff={reservation.staff || null}
-            isMobile={true}
-          />
-        ))
+        sortedReservations.map((event) => {
+          const startTime = new Date(event.start);
+          const endTime = new Date(event.end);
+          const timeStr = `${startTime.getHours().toString().padStart(2, "0")}:${startTime.getMinutes().toString().padStart(2, "0")}-${endTime.getHours().toString().padStart(2, "0")}:${endTime.getMinutes().toString().padStart(2, "0")}`;
+          return (
+            <EventCard
+              key={event.id}
+              reservationId={event.id}
+              time={timeStr}
+              customerName={event.customerName}
+              serviceItem={event.serviceName}
+              status={event.status}
+              staff={event.staffName || null}
+              isMobile={true}
+            />
+          );
+        })
       )}
     </div>
   );
 }
-

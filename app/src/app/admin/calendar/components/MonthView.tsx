@@ -1,4 +1,4 @@
-import { getReservations } from "../../reservations/data";
+import { getReservationsForDate } from "@/lib/mock-data";
 import EventCard from "./EventCard";
 
 interface MonthViewProps {
@@ -6,7 +6,6 @@ interface MonthViewProps {
 }
 
 export default function MonthView({ currentDate }: MonthViewProps) {
-  const reservations = getReservations();
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
@@ -27,13 +26,6 @@ export default function MonthView({ currentDate }: MonthViewProps) {
     days.push(new Date(year, month, day));
   }
 
-  // 取得特定日期的預約
-  const getReservationsForDate = (date: Date | null) => {
-    if (!date) return [];
-    const dateStr = date.toISOString().split("T")[0];
-    return reservations.filter((r) => r.booking_date === dateStr);
-  };
-
   const weekDays = ["日", "一", "二", "三", "四", "五", "六"];
 
   return (
@@ -49,37 +41,43 @@ export default function MonthView({ currentDate }: MonthViewProps) {
         ))}
       </div>
       <div className="grid grid-cols-7">
-        {days.map((date, index) => (
-          <div
-            key={index}
-            className="min-h-[120px] border-r border-b border-zinc-200 p-2 bg-white"
-          >
-            {date ? (
-              <>
-                <div className="text-sm font-medium text-zinc-900 mb-2">
-                  {date.getDate()}
-                </div>
-                <div className="space-y-1">
-                  {getReservationsForDate(date).map((reservation) => (
-                    <EventCard
-                      key={reservation.reservation_id}
-                      reservationId={reservation.reservation_id}
-                      time={reservation.booking_time_slot.split("-")[0]}
-                      customerName={reservation.customer_name}
-                      serviceItem={reservation.service_item}
-                      status={reservation.status}
-                      staff={reservation.staff || null}
-                    />
-                  ))}
-                </div>
-              </>
-            ) : (
-              <div className="bg-zinc-50 h-full" />
-            )}
-          </div>
-        ))}
+        {days.map((date, index) => {
+          const events = date ? getReservationsForDate(date) : [];
+          return (
+            <div
+              key={index}
+              className="min-h-[120px] border-r border-b border-zinc-200 p-2 bg-white"
+            >
+              {date ? (
+                <>
+                  <div className="text-sm font-medium text-zinc-900 mb-2">
+                    {date.getDate()}
+                  </div>
+                  <div className="space-y-1">
+                    {events.map((event) => {
+                      const startTime = new Date(event.start);
+                      const timeStr = `${startTime.getHours().toString().padStart(2, "0")}:${startTime.getMinutes().toString().padStart(2, "0")}`;
+                      return (
+                        <EventCard
+                          key={event.id}
+                          reservationId={event.id}
+                          time={timeStr}
+                          customerName={event.customerName}
+                          serviceItem={event.serviceName}
+                          status={event.status}
+                          staff={event.staffName || null}
+                        />
+                      );
+                    })}
+                  </div>
+                </>
+              ) : (
+                <div className="bg-zinc-50 h-full" />
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
-

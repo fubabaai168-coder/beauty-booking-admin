@@ -7,6 +7,7 @@ import {
   Settings,
   MessageSquare,
   HelpCircle,
+  UserCog,
 } from "lucide-react";
 
 export interface MenuItem {
@@ -42,6 +43,12 @@ export const menuItems: MenuItem[] = [
     icon: Package,
   },
   {
+    href: "/admin/staff",
+    label: "人員管理",
+    labelEn: "Staff",
+    icon: UserCog,
+  },
+  {
     href: "/admin/calendar",
     label: "行事曆",
     labelEn: "Calendar",
@@ -54,7 +61,7 @@ export const menuItems: MenuItem[] = [
     icon: MessageSquare,
   },
   {
-    href: "/admin/support/faq",
+    href: "/admin/faq",
     label: "FAQ 管理",
     labelEn: "FAQ Management",
     icon: HelpCircle,

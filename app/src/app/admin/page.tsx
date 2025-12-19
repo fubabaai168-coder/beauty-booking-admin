@@ -1,19 +1,62 @@
+"use client";
+
 import Link from "next/link";
+import { RESERVATIONS_DATA, getServiceById } from "@/lib/mock-data";
+import { Badge } from "@/components/ui/badge";
 
 export default function AdminPage() {
-  // Mock data for dashboard
-  const stats = {
-    todayReservations: 12,
-    pendingReservations: 5,
-    totalCustomers: 156,
-    activeStaff: 8,
+  // 計算 KPI
+  const today = new Date().toISOString().split("T")[0];
+  
+  // 今日營收：加總所有狀態為 CONFIRMED 或 COMPLETED 的訂單金額
+  const totalRevenue = RESERVATIONS_DATA
+    .filter(
+      (r) => r.status === "CONFIRMED" || r.status === "COMPLETED"
+    )
+    .reduce((sum, r) => sum + r.price, 0);
+
+  // 預約總數
+  const totalAppointments = RESERVATIONS_DATA.length;
+
+  // 待確認數量
+  const pendingCount = RESERVATIONS_DATA.filter(
+    (r) => r.status === "PENDING"
+  ).length;
+
+  // 在職人員數（從 STAFF_DATA 取得，但這裡我們先使用固定值，因為沒有在 mock-data 中匯出）
+  const activeStaff = 4; // 暫時固定值
+
+  // 近期預約列表（前 5 筆）
+  const recentReservations = RESERVATIONS_DATA.slice(0, 5);
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return "待確認";
+      case "CONFIRMED":
+        return "已確認";
+      case "COMPLETED":
+        return "已完成";
+      case "CANCELLED":
+        return "已取消";
+      default:
+        return status;
+    }
   };
 
-  const recentReservations = [
-    { id: 1, customer: "王小明", service: "基礎保養", time: "14:00", status: "已確認" },
-    { id: 2, customer: "李小華", service: "深層清潔", time: "15:30", status: "待確認" },
-    { id: 3, customer: "張三", service: "基礎保養", time: "16:00", status: "已確認" },
-  ];
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return "secondary";
+      case "CONFIRMED":
+      case "COMPLETED":
+        return "default";
+      case "CANCELLED":
+        return "destructive";
+      default:
+        return "outline";
+    }
+  };
 
   return (
     <div className="p-6">
@@ -24,8 +67,36 @@ export default function AdminPage() {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-zinc-600 mb-1">今日預約</p>
-              <p className="text-2xl font-semibold text-zinc-900">{stats.todayReservations}</p>
+              <p className="text-sm text-zinc-600 mb-1">今日營收</p>
+              <p className="text-2xl font-semibold text-zinc-900">
+                NT$ {totalRevenue.toLocaleString()}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <svg
+                className="w-6 h-6 text-green-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-zinc-600 mb-1">預約總數</p>
+              <p className="text-2xl font-semibold text-zinc-900">
+                {totalAppointments}
+              </p>
             </div>
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
               <svg
@@ -49,7 +120,9 @@ export default function AdminPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-zinc-600 mb-1">待確認</p>
-              <p className="text-2xl font-semibold text-zinc-900">{stats.pendingReservations}</p>
+              <p className="text-2xl font-semibold text-zinc-900">
+                {pendingCount}
+              </p>
             </div>
             <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
               <svg
@@ -72,32 +145,10 @@ export default function AdminPage() {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-zinc-600 mb-1">總客戶數</p>
-              <p className="text-2xl font-semibold text-zinc-900">{stats.totalCustomers}</p>
-            </div>
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <svg
-                className="w-6 h-6 text-green-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
               <p className="text-sm text-zinc-600 mb-1">在職人員</p>
-              <p className="text-2xl font-semibold text-zinc-900">{stats.activeStaff}</p>
+              <p className="text-2xl font-semibold text-zinc-900">
+                {activeStaff}
+              </p>
             </div>
             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
               <svg
@@ -125,7 +176,7 @@ export default function AdminPage() {
             <h2 className="text-lg font-semibold text-zinc-900">最近預約</h2>
             <Link
               href="/admin/reservations"
-              className="text-sm text-blue-600 hover:text-blue-800"
+              className="text-sm text-primary hover:underline"
             >
               查看全部 →
             </Link>
@@ -133,29 +184,39 @@ export default function AdminPage() {
         </div>
         <div className="p-6">
           <div className="space-y-4">
-            {recentReservations.map((reservation) => (
-              <div
-                key={reservation.id}
-                className="flex items-center justify-between py-3 border-b border-zinc-100 last:border-b-0"
-              >
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-zinc-900">{reservation.customer}</p>
-                  <p className="text-sm text-zinc-600">{reservation.service}</p>
+            {recentReservations.map((reservation) => {
+              const service = getServiceById(reservation.serviceId);
+              return (
+                <div
+                  key={reservation.id}
+                  className="flex items-center justify-between py-3 border-b border-zinc-100 last:border-b-0"
+                >
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-zinc-900">
+                      {reservation.customerName}
+                    </p>
+                    <p className="text-sm text-zinc-600">
+                      {service?.name || reservation.serviceId}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-zinc-900">
+                      {reservation.date} {reservation.time}
+                    </p>
+                    <Badge
+                      variant={getStatusBadgeVariant(reservation.status) as any}
+                      className={
+                        reservation.status === "PENDING"
+                          ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
+                          : ""
+                      }
+                    >
+                      {getStatusLabel(reservation.status)}
+                    </Badge>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-zinc-900">{reservation.time}</p>
-                  <span
-                    className={`inline-block px-2 py-1 text-xs rounded-full ${
-                      reservation.status === "已確認"
-                        ? "bg-blue-100 text-blue-800"
-                        : "bg-yellow-100 text-yellow-800"
-                    }`}
-                  >
-                    {reservation.status}
-                  </span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
