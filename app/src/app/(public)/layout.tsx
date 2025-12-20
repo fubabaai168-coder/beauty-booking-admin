@@ -166,7 +166,14 @@ export default function PublicLayout({
           {/* Copyright */}
           <div className="border-t border-zinc-800 mt-8 pt-8">
             <p className="text-center text-sm text-zinc-400">
-              © 2025 SoloAI Beauty. All rights reserved.
+              © 2025{' '}
+              <Link
+                href="/login"
+                className="text-zinc-400 hover:text-white transition-colors hover:underline"
+              >
+                SoloAI Beauty
+              </Link>
+              . All rights reserved.
             </p>
           </div>
         </div>

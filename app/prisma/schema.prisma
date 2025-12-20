@@ -10,25 +10,199 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ServiceItem（服務項目）
-// 官網級 Service Catalog 的最小可行模型（v1）
-model ServiceItem {
-  id           String   @id @default(cuid()) // 服務 ID (Service ID)
-  branchId     String   // 分店 ID (Branch ID)
+// ============================================
+// Enums
+// ============================================
 
-  title        String   // 服務名稱 (Title)
-  description  String?  // 服務說明 (Description)
-  price        Int      // 價格（最小貨幣單位，例如 TWD 元）(Price)
-  durationMin  Int      // 服務時長（分鐘）(Duration in minutes)
-
-  imageUrl     String?  // 主圖 URL (Main image URL)
-
-  isActive     Boolean  @default(true) // 是否上架 (Active)
-  sortOrder    Int      @default(0)    // 前台排序 (Sort order)
-
-  createdAt    DateTime @default(now()) // 建立時間 (Created at)
-  updatedAt    DateTime @updatedAt      // 更新時間 (Updated at)
-
-  @@index([branchId])
+enum UserRole {
+  ADMIN  // 店長/擁有者
+  STAFF  // 一般員工
 }
 
+enum ReservationStatus {
+  PENDING    // 待確認
+  CONFIRMED  // 已確認
+  CANCELLED  // 已取消
+  COMPLETED  // 已完成
+}
+
+enum ServiceCategory {
+  Nail    // 美甲
+  Lash    // 美睫
+  Facial  // 美容
+}
+
+enum DayOfWeek {
+  MON  // 週一
+  TUE  // 週二
+  WED  // 週三
+  THU  // 週四
+  FRI  // 週五
+  SAT  // 週六
+  SUN  // 週日
+}
+
+// ============================================
+// User / Staff (員工與使用者)
+// ============================================
+
+model User {
+  id        String   @id @default(cuid())
+  name      String   // 姓名
+  email     String?  @unique // 電子郵件（可選，用於登入）
+  phone     String?  // 電話（可選）
+  password  String   // 密碼（bcrypt 雜湊）
+  role      UserRole @default(STAFF) // 角色：ADMIN 或 STAFF
+  avatar    String?  // 頭像 URL
+  skills    String[] @default([]) // 技能列表（例如：["美甲", "美睫"]）
+  isActive  Boolean  @default(true) // 是否在職
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  weeklySchedules    WeeklySchedule[]    // 常態週排班表
+  scheduleOverrides  ScheduleOverride[]   // 單日排班例外
+  reservations       Reservation[]        // 該員工的預約記錄
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+// ============================================
+// Service (服務項目)
+// ============================================
+
+model Service {
+  id          String          @id @default(cuid())
+  name        String          // 服務名稱
+  category    ServiceCategory // 服務類別（美甲/美睫/美容）
+  price       Int             // 價格（單位：元）
+  duration    Int             // 服務時長（單位：分鐘）
+  bufferTime  Int             @default(0) // 緩衝時間（單位：分鐘）- 本次改版重點
+  description String?         // 服務說明
+  isActive    Boolean         @default(true) // 是否上架
+  
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  // Relations
+  reservations Reservation[]
+
+  @@index([category])
+  @@index([isActive])
+  @@map("services")
+}
+
+// ============================================
+// Schedule (排班管理)
+// ============================================
+
+// 常態週排班表（每週固定上班日）
+model WeeklySchedule {
+  id        String    @id @default(cuid())
+  userId    String    // 員工 ID
+  dayOfWeek DayOfWeek // 星期幾（MON, TUE, ...）
+  isOff     Boolean   @default(false) // 是否休假
+  startTime String    // 上班時間（格式："HH:mm"，例如 "10:00"）
+  endTime   String    // 下班時間（格式："HH:mm"，例如 "21:00"）
+  
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, dayOfWeek]) // 每個員工每週的每一天只能有一筆記錄
+  @@index([userId])
+  @@map("weekly_schedules")
+}
+
+// 單日排班例外（特定日期的特殊狀況）
+model ScheduleOverride {
+  id        String   @id @default(cuid())
+  userId    String   // 員工 ID
+  date      DateTime @db.Date // 日期（格式：YYYY-MM-DD）
+  isOff     Boolean  @default(false) // 是否休假
+  startTime String?  // 上班時間（格式："HH:mm"，若 isOff=true 則為 null）
+  endTime   String?  // 下班時間（格式："HH:mm"，若 isOff=true 則為 null）
+  note      String?  // 備註（例如：事假、調班、特休）
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date]) // 每個員工每個日期只能有一筆例外記錄
+  @@index([userId])
+  @@index([date])
+  @@map("schedule_overrides")
+}
+
+// ============================================
+// Reservation (預約)
+// ============================================
+
+model Reservation {
+  id            String            @id @default(cuid())
+  customerName  String            // 顧客姓名
+  customerPhone String            // 顧客電話
+  serviceId     String            // 服務 ID
+  staffId       String            // 員工 ID（對應 User）
+  startTime     DateTime          // 預約開始時間（ISO datetime）
+  endTime       DateTime          // 預約結束時間（ISO datetime）
+  status        ReservationStatus @default(PENDING) // 預約狀態
+  price         Int               // 預約價格（可能與服務價格不同，支援折扣）
+  notes         String?           // 備註（顧客特殊需求等）
+  
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  // Relations
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  staff   User    @relation(fields: [staffId], references: [id], onDelete: Restrict)
+
+  @@index([serviceId])
+  @@index([staffId])
+  @@index([startTime])
+  @@index([status])
+  @@index([customerPhone])
+  @@map("reservations")
+}
+
+// ============================================
+// Customer (顧客資料 - 可選，但 mock-data 有定義)
+// ============================================
+
+model Customer {
+  id         String   @id @default(cuid())
+  name       String   // 姓名
+  phone      String   @unique // 電話（作為唯一識別）
+  email      String?  // 電子郵件
+  visits     Int      @default(0) // 來訪次數
+  totalSpent Int      @default(0) // 累積消費金額
+  lastVisit  DateTime? @db.Date // 最後來訪日期
+  tags       String[] @default([]) // 標籤（例如：["VIP", "熟客"]）
+  notes      String?  // 備註（例如：偏好、過敏等）
+  
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([phone])
+  @@index([name])
+  @@map("customers")
+}
+
+// ============================================
+// ShopSettings (商店設定 - 單例模式)
+// ============================================
+
+model ShopSettings {
+  id            Int      @id @default(1) // 固定為 1，確保單例
+  minDailyStaff Int      @default(2) // 每日最低人力標準（綠燈門檻）
+  updatedAt     DateTime @updatedAt
+
+  @@map("shop_settings")
+}

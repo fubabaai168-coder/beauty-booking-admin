@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { menuItems } from "./menuConfig";
+import LogoutButton from "./LogoutButton";
 
 export default function Sidebar() {
   return (
-    <aside className="hidden md:block w-64 bg-white border-r border-zinc-200 min-h-screen">
-      <div className="p-4">
+    <aside className="hidden md:block w-64 bg-white border-r border-zinc-200 min-h-screen flex flex-col">
+      <div className="p-4 flex-1">
         <h2 className="text-lg font-semibold text-zinc-900 mb-4">後台管理</h2>
         <nav className="space-y-2">
           {menuItems.map((item) => {
@@ -21,6 +22,9 @@ export default function Sidebar() {
             );
           })}
         </nav>
+      </div>
+      <div className="p-4 border-t border-zinc-200">
+        <LogoutButton />
       </div>
     </aside>
   );

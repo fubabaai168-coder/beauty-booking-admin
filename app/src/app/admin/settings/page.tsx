@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,15 +17,39 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { STORE_SETTINGS } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
 import { Save } from "lucide-react";
+import { getShopSettings, updateShopSettings } from "./actions";
 
 export default function SettingsPage() {
   const { toast } = useToast();
   const [settings, setSettings] = useState(STORE_SETTINGS);
+  const [minDailyStaff, setMinDailyStaff] = useState(2);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [notifications, setNotifications] = useState({
     emailOnNewBooking: true,
     dailyScheduleSummary: true,
     smsReminders: false,
   });
+
+  // 載入商店設定
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const shopSettings = await getShopSettings();
+        setMinDailyStaff(shopSettings.minDailyStaff);
+      } catch (error) {
+        console.error("載入設定失敗:", error);
+        toast({
+          title: "載入失敗",
+          description: "無法載入商店設定",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadSettings();
+  }, [toast]);
 
   const handleInputChange = (field: keyof typeof STORE_SETTINGS, value: string) => {
     setSettings((prev) => ({ ...prev, [field]: value }));
@@ -35,13 +59,33 @@ export default function SettingsPage() {
     setSettings((prev) => ({ ...prev, bookingInterval: parseInt(value) }));
   };
 
-  const handleSave = () => {
-    // Mock save logic
-    console.log("儲存設定:", { settings, notifications });
-    toast({
-      title: "設定已更新！",
-      description: "您的設定已成功儲存",
-    });
+  const handleMinDailyStaffChange = (value: string) => {
+    const numValue = parseInt(value);
+    if (!isNaN(numValue) && numValue >= 0) {
+      setMinDailyStaff(numValue);
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      // 儲存商店設定（人力標準）
+      await updateShopSettings({ minDailyStaff });
+
+      toast({
+        title: "設定已更新！",
+        description: "您的設定已成功儲存，排班表的燈號將立即更新",
+      });
+    } catch (error) {
+      console.error("儲存設定失敗:", error);
+      toast({
+        title: "儲存失敗",
+        description: "無法儲存設定，請稍後再試",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -52,10 +96,11 @@ export default function SettingsPage() {
         </h1>
         <Button
           onClick={handleSave}
+          disabled={loading || saving}
           className="bg-[#BE185D] hover:bg-[#BE185D]/90 text-white"
         >
           <Save className="mr-2 h-4 w-4" />
-          儲存設定
+          {saving ? "儲存中..." : "儲存設定"}
         </Button>
       </div>
 
@@ -163,6 +208,32 @@ export default function SettingsPage() {
                     <SelectItem value="60">60 分鐘</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 排班標準設定 */}
+          <Card>
+            <CardHeader>
+              <CardTitle>排班標準設定</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="minDailyStaff">
+                  每日最低人力標準 (綠燈門檻) <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="minDailyStaff"
+                  type="number"
+                  min="0"
+                  value={minDailyStaff}
+                  onChange={(e) => handleMinDailyStaffChange(e.target.value)}
+                  className="mt-2"
+                  placeholder="例如：2"
+                />
+                <p className="text-sm text-zinc-600 mt-2">
+                  當上班人數達到此數字時，排班表將顯示綠燈；低於此數字顯示黃燈；0 人顯示紅燈。
+                </p>
               </div>
             </CardContent>
           </Card>

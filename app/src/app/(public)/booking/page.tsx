@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,22 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { SERVICES_DATA, STAFF_DATA, getServiceById, getStaffById } from "@/lib/mock-data";
+import { STAFF_DATA, getStaffById } from "@/lib/mock-data";
+import { getServices, getServiceById } from "./actions";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { CalendarIcon, ArrowLeft, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+interface Service {
+  id: string;
+  name: string;
+  category: string;
+  price: number;
+  duration: number;
+  bufferTime: number;
+  description: string | null;
+}
 
 interface BookingData {
   serviceId: string | null;
@@ -36,6 +47,8 @@ export default function BookingPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [step, setStep] = useState(1);
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
   const [bookingData, setBookingData] = useState<BookingData>({
     serviceId: null,
     staffId: null,
@@ -50,6 +63,21 @@ export default function BookingPage() {
 
   const totalSteps = 4;
   const progress = (step / totalSteps) * 100;
+
+  // 載入服務資料
+  useEffect(() => {
+    async function loadServices() {
+      try {
+        const data = await getServices();
+        setServices(data);
+      } catch (error) {
+        console.error('載入服務失敗:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadServices();
+  }, []);
 
   const handleServiceSelect = (serviceId: string) => {
     setBookingData({ ...bookingData, serviceId });
@@ -80,8 +108,10 @@ export default function BookingPage() {
     });
   };
 
-  const handleSubmit = () => {
-    const selectedService = getServiceById(bookingData.serviceId || "");
+  const handleSubmit = async () => {
+    if (!bookingData.serviceId) return;
+    
+    const selectedService = await getServiceById(bookingData.serviceId);
     const selectedStaff = bookingData.staffId ? getStaffById(bookingData.staffId) : null;
 
     const finalBookingData = {
@@ -102,12 +132,54 @@ export default function BookingPage() {
     }, 2000);
   };
 
-  const selectedService = bookingData.serviceId ? getServiceById(bookingData.serviceId) : null;
+  const selectedService = services.find((s) => s.id === bookingData.serviceId) || null;
   const selectedStaff = bookingData.staffId ? getStaffById(bookingData.staffId) : null;
+
+  const handleNext = () => {
+    if (step === 1 && bookingData.serviceId) {
+      setStep(2);
+    } else if (step === 2) {
+      handleStaffSelect(bookingData.staffId);
+    } else if (step === 3 && bookingData.date && bookingData.time) {
+      handleTimeSelect(bookingData.time);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (step > 1) {
+      setStep(step - 1);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 to-white py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
+        {/* Top Navigation */}
+        <div className="mb-4 flex items-center justify-between">
+          <Button
+            variant="outline"
+            onClick={handlePrevious}
+            disabled={step === 1}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            上一步
+          </Button>
+          {step < 4 && (
+            <Button
+              onClick={handleNext}
+              disabled={
+                (step === 1 && !bookingData.serviceId) ||
+                (step === 3 && (!bookingData.date || !bookingData.time))
+              }
+              className="bg-[#BE185D] hover:bg-[#BE185D]/90 text-white flex items-center gap-2"
+            >
+              下一步
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
@@ -140,36 +212,53 @@ export default function BookingPage() {
             {/* Step 1: Select Service */}
             {step === 1 && (
               <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {SERVICES_DATA.map((service) => (
-                    <button
-                      key={service.id}
-                      onClick={() => handleServiceSelect(service.id)}
-                      className={cn(
-                        "text-left p-6 rounded-lg border-2 transition-all hover:shadow-lg",
-                        bookingData.serviceId === service.id
-                          ? "border-[#BE185D] bg-rose-50"
-                          : "border-zinc-200 hover:border-rose-200 bg-white"
-                      )}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 className="text-lg font-semibold text-zinc-900">
-                          {service.name}
-                        </h3>
-                        {bookingData.serviceId === service.id && (
-                          <Badge className="bg-[#BE185D]">已選擇</Badge>
+                {loading ? (
+                  <div className="text-center py-12">
+                    <p className="text-zinc-600">載入服務項目中...</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {services.map((service) => (
+                      <div
+                        key={service.id}
+                        className={cn(
+                          "text-left p-6 rounded-lg border-2 transition-all hover:shadow-lg bg-white relative",
+                          bookingData.serviceId === service.id
+                            ? "border-[#BE185D] bg-rose-50"
+                            : "border-zinc-200 hover:border-rose-200"
                         )}
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <h3 className="text-lg font-semibold text-zinc-900">
+                            {service.name}
+                          </h3>
+                          {bookingData.serviceId === service.id && (
+                            <Badge className="bg-[#BE185D]">已選擇</Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="text-xl font-bold text-[#BE185D]">
+                            NT$ {service.price.toLocaleString()}
+                          </span>
+                          <Badge variant="secondary">{service.duration} 分鐘</Badge>
+                        </div>
+                        <p className="text-sm text-zinc-600 mb-4">
+                          {service.description || "專業服務"}
+                        </p>
+                        {/* 立即預約按鈕 */}
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleServiceSelect(service.id);
+                          }}
+                          className="w-full bg-[#BE185D] hover:bg-[#BE185D]/90 text-white"
+                        >
+                          立即預約
+                        </Button>
                       </div>
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className="text-xl font-bold text-[#BE185D]">
-                          NT$ {service.price.toLocaleString()}
-                        </span>
-                        <Badge variant="secondary">{service.duration} 分鐘</Badge>
-                      </div>
-                      <p className="text-sm text-zinc-600">{service.description}</p>
-                    </button>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -394,7 +483,7 @@ export default function BookingPage() {
             <div className="flex items-center justify-between mt-8 pt-6 border-t border-zinc-200">
               <Button
                 variant="outline"
-                onClick={() => setStep(Math.max(1, step - 1))}
+                onClick={handlePrevious}
                 disabled={step === 1}
                 className="flex items-center gap-2"
               >
@@ -403,15 +492,9 @@ export default function BookingPage() {
               </Button>
               {step < 4 ? (
                 <Button
-                  onClick={() => {
-                    if (step === 2 && bookingData.staffId === null) {
-                      handleStaffSelect(null);
-                    } else if (step === 3 && bookingData.date && bookingData.time) {
-                      handleTimeSelect(bookingData.time);
-                    }
-                  }}
+                  onClick={handleNext}
                   disabled={
-                    (step === 2 && bookingData.staffId === null && false) ||
+                    (step === 1 && !bookingData.serviceId) ||
                     (step === 3 && (!bookingData.date || !bookingData.time))
                   }
                   className="bg-[#BE185D] hover:bg-[#BE185D]/90 text-white flex items-center gap-2"
@@ -437,4 +520,3 @@ export default function BookingPage() {
     </div>
   );
 }
-

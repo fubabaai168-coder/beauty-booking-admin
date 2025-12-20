@@ -3,43 +3,58 @@
 import Link from "next/link";
 import { useState } from "react";
 import { menuItems } from "./menuConfig";
+import LogoutButton from "./LogoutButton";
+import BackToWebsiteButton from "./BackToWebsiteButton";
+import CustomerBookingButton from "./CustomerBookingButton";
 
 export default function Topbar() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   return (
     <>
-      <header className="h-16 bg-white border-b border-zinc-200 flex items-center px-6">
-        {/* Mobile 漢堡按鈕 */}
-        <button
-          className="block md:hidden mr-4 p-2 text-zinc-700 hover:bg-zinc-100 rounded-md"
-          onClick={() => setIsDrawerOpen(!isDrawerOpen)}
-          aria-label="開啟選單"
-        >
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+      <header className="h-16 bg-white border-b border-zinc-200 flex items-center justify-between px-6">
+        <div className="flex items-center">
+          {/* Mobile 漢堡按鈕 */}
+          <button
+            className="block md:hidden mr-4 p-2 text-zinc-700 hover:bg-zinc-100 rounded-md"
+            onClick={() => setIsDrawerOpen(!isDrawerOpen)}
+            aria-label="開啟選單"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 6h16M4 12h16M4 18h16"
-            />
-          </svg>
-        </button>
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            </svg>
+          </button>
 
-        {/* Desktop 標題 */}
-        <h1 className="text-lg font-semibold text-zinc-900 hidden md:block">
-          後台管理系統
-        </h1>
+          {/* Desktop 標題 */}
+          <h1 className="text-lg font-semibold text-zinc-900 hidden md:block">
+            後台管理系統
+          </h1>
 
-        {/* Mobile 標題 */}
-        <h1 className="text-lg font-semibold text-zinc-900 block md:hidden">
-          後台管理
-        </h1>
+          {/* Mobile 標題 */}
+          <h1 className="text-lg font-semibold text-zinc-900 block md:hidden">
+            後台管理
+          </h1>
+        </div>
+
+        {/* 右側功能區 */}
+        <div className="flex items-center gap-2">
+          {/* 客人預約按鈕 */}
+          <CustomerBookingButton />
+          {/* 回前台按鈕 */}
+          <BackToWebsiteButton />
+          {/* 登出按鈕 */}
+          <LogoutButton />
+        </div>
       </header>
 
       {/* Mobile Drawer */}
@@ -92,6 +107,9 @@ export default function Topbar() {
                   );
                 })}
               </nav>
+              <div className="mt-4 pt-4 border-t border-zinc-200">
+                <LogoutButton />
+              </div>
             </div>
           </aside>
         </>
